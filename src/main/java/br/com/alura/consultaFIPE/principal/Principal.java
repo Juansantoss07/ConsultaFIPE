@@ -1,7 +1,11 @@
 package br.com.alura.consultaFIPE.principal;
 
+import br.com.alura.consultaFIPE.model.Dados;
+import br.com.alura.consultaFIPE.model.Modelos;
 import br.com.alura.consultaFIPE.service.ConsumoAPI;
+import br.com.alura.consultaFIPE.service.ConverteDados;
 
+import java.util.Comparator;
 import java.util.Scanner;
 
 public class Principal {
@@ -9,6 +13,7 @@ public class Principal {
     private Scanner leitura = new Scanner(System.in);
     private final String URL_BASE = "https://parallelum.com.br/fipe/api/v1/";
     private ConsumoAPI consumo = new ConsumoAPI();
+    private ConverteDados conversor = new ConverteDados();
 
     public void exibeMenu(){
         var menu = """
@@ -35,21 +40,19 @@ public class Principal {
         var json = consumo.obterDados(endereco);
         System.out.println(json);
 
-        var menu_modelos = "Agora, digite o código referente a marca que você deseja ver os modelos:";
-        System.out.println(menu_modelos);
-        var opcao_modelos = endereco + "/" + leitura.nextLine() + "/modelos";
-        var json_modelos = consumo.obterDados(opcao_modelos);
-        System.out.println(json_modelos);
+        var marcas = conversor.obterLista(json, Dados.class);
+        marcas.stream()
+                .sorted(Comparator.comparing(Dados::codigo))
+                .forEach(System.out::println);
 
-        var menu_anos = "Agora, digite o código referente ao ano do modelo:";
-        System.out.println(menu_anos);
-        var opcao_anos = opcao_modelos + "/" + leitura.nextLine() + "/anos";
-        var json_anos = consumo.obterDados(opcao_anos);
-        System.out.println(json_anos);
+        System.out.println("Informe o código da marca para consulta:");
+        var codigoMarca = leitura.nextLine();
 
-        var menu_final = "Para finalizar, digite o código referente ao ano selecionado:";
-        var opcao_final = opcao_anos + "/" + leitura.nextLine();
-        var json_final = consumo.obterDados(opcao_final);
-        System.out.println(json_final);
+        endereco = endereco + "/" + codigoMarca + "/modelos";
+        json = consumo.obterDados(endereco);
+        var modeloLista = conversor.obterDados(json, Modelos.class);
+        modeloLista.modelos()
+                .stream().sorted(Comparator.comparing(Dados::codigo))
+                .forEach(System.out::println);
     }
 }
